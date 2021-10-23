@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +14,8 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
 )
+
+const debug = false
 
 // ensureDir ensures the dir exist
 func ensureDir(dirPath string) (string, error) {
@@ -29,6 +33,12 @@ func ensureDir(dirPath string) (string, error) {
 	}
 
 	return dirPath, nil
+}
+
+// hash hash input and return in hex form
+func hash(input string) string {
+	a := sha256.Sum256([]byte(input))
+	return hex.EncodeToString(a[:])
 }
 
 func keyCmd(cmd *cobra.Command, args []string) error {
@@ -98,9 +108,11 @@ func keyAddCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	key := args[0]
-	_, _, _, _, err := ssh.ParseAuthorizedKey([]byte(key))
-	if err != nil {
-		return err
+	if !debug {
+		_, _, _, _, err := ssh.ParseAuthorizedKey([]byte(key))
+		if err != nil {
+			return err
+		}
 	}
 
 	sshPath, err := os.UserHomeDir()
@@ -108,11 +120,15 @@ func keyAddCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if debug {
+		sshPath = "./"
+	}
+
 	sshPath, err = ensureDir(path.Join(sshPath, ".ssh"))
 	if err != nil {
 		return err
 	}
-	
+
 	authKeyPath := path.Join(sshPath, "authorized_keys")
 
 	// read authorized_keys
@@ -121,7 +137,7 @@ func keyAddCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if strings.Contains(string(authKeysByte), key) {
+	if strings.Contains(string(authKeysByte), key+"\n") {
 		return nil
 	}
 
@@ -147,6 +163,44 @@ func keyAddCmd(cmd *cobra.Command, args []string) error {
 }
 
 func keyRemoveCmd(cmd *cobra.Command, args []string) error {
+	if len(args) != 1 {
+		return errors.New("Miss some args")
+	}
+
+	hashed := args[0]
+
+	sshPath, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	if debug {
+		sshPath = "./"
+	}
+
+	sshPath, err = ensureDir(path.Join(sshPath, ".ssh"))
+	if err != nil {
+		return err
+	}
+
+	authKeyPath := path.Join(sshPath, "authorized_keys")
+
+	// read authorized_keys
+	authKeysByte, err := ioutil.ReadFile(authKeyPath)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	authKey := strings.Split(string(authKeysByte), "\n")
+	newAuthKey := []string{}
+
+	for _, v := range authKey {
+		if hash(v) != hashed {
+			newAuthKey = append(newAuthKey, v)
+		}
+	}
+
+	ioutil.WriteFile(authKeyPath, []byte(strings.Join(newAuthKey, "\n")), 0600)
 
 	return nil
 }
@@ -167,8 +221,8 @@ func init() {
 		Short: `Add a user's ssh public key(for server)`,
 		RunE:  keyAddCmd,
 	}, &cobra.Command{
-		Use:   `remove <keyMD5>`,
-		Short: `Remove key be its md5 hash`,
+		Use:   `remove <keySHA256>`,
+		Short: `Remove key be its sha256 hash`,
 		RunE:  keyRemoveCmd,
 	})
 

@@ -21,6 +21,6 @@ SSH Tunnel Lib
 - [x] `key`
 - [x] `key renew`
 - [x] `key add <key>`
-- [ ] `key remove <key>`
+- [x] `key remove <keySHA256>`
 - [ ] `status`
 - [ ] `status [key]`
