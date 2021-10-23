@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
 )
 
 // ensureDir ensures the dir exist
@@ -97,24 +98,21 @@ func keyAddCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	key := args[0]
-	// _, _, _, _, err := ssh.ParseAuthorizedKey([]byte(key))
-	// if err != nil {
-	//     return err
-	// }
+	_, _, _, _, err := ssh.ParseAuthorizedKey([]byte(key))
+	if err != nil {
+		return err
+	}
 
 	sshPath, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
 
-	// debug only
-	sshPath = "./"
-
 	sshPath, err = ensureDir(path.Join(sshPath, ".ssh"))
 	if err != nil {
 		return err
 	}
-
+	
 	authKeyPath := path.Join(sshPath, "authorized_keys")
 
 	// read authorized_keys
