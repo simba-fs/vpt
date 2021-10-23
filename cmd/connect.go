@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/meow55555/stl/internal/ssh"
 	"github.com/spf13/cobra"
 )
 
@@ -30,25 +31,24 @@ func connectCmd(cmd *cobra.Command, args []string) error {
 	part := strings.SplitN(args[1], ":", 3)
 
 	// local port
-	localPort, err := strconv.ParseInt(part[0], 10, 64)
+	_, err := strconv.ParseInt(part[0], 10, 64)
 	if err != nil {
 		return err
 	}
 
-	serverIP := part[1]
 
 	// server port
-	serverPort, err := strconv.ParseInt(part[2], 10, 64)
+	_, err = strconv.ParseInt(part[2], 10, 64)
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("mode: %v\n", mode)
-	fmt.Printf("localPort: %v\n", localPort)
-	fmt.Printf("serverIP: %v\n", serverIP)
-	fmt.Printf("serverPort: %v\n", serverPort)
+	fmt.Printf("localPort: %v\n", part[0])
+	fmt.Printf("serverIP: %v\n", part[1])
+	fmt.Printf("serverPort: %v\n", part[2])
 
-	return nil
+	return ssh.New(mode, part[0], part[1], part[2]).Connect()
 }
 
 func init() {
@@ -56,6 +56,8 @@ func init() {
 		Use:   `connect <mode> <localPort:serverIP:serverPort>`,
 		Long:  `<mode> must be "host" or "client"`,
 		Short: "Establish a ssh tunnel to configured server",
+		Example: `host:   stl connect host 3000:example.com:22
+client: stl connect client 8888:example.com:22`,
 		RunE:  connectCmd,
 	}
 

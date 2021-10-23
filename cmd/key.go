@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -13,55 +11,14 @@ import (
 
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh"
+
+	"github.com/meow55555/stl/internal/util"
 )
 
 const debug = false
 
-// ensureDir ensures the dir exist
-func ensureDir(dirPath string) (string, error) {
-	stat, err := os.Stat(dirPath)
-	if os.IsNotExist(err) {
-		// mkdir
-		os.Mkdir(dirPath, 0775)
-	} else if !stat.IsDir() {
-		// remove
-		if err := os.Remove(dirPath); err != nil {
-			return "", err
-		}
-		// mkdir
-		os.Mkdir(dirPath, 0775)
-	}
-
-	return dirPath, nil
-}
-
-// hash hash input and return in hex form
-func hash(input string) string {
-	a := sha256.Sum256([]byte(input))
-	return hex.EncodeToString(a[:])
-}
-
 func keyCmd(cmd *cobra.Command, args []string) error {
-	configPath, err := os.UserConfigDir()
-	if err != nil {
-		return err
-	}
-	configPath, err = ensureDir(path.Join(configPath, "stl"))
-	if err != nil {
-		return err
-	}
-
-	sshKeyPath := path.Join(configPath, "stlKey")
-	// find ssh key
-	if _, err := os.Stat(sshKeyPath + ".pub"); os.IsNotExist(err) {
-		// generate a new one
-		if _, err := exec.Command("ssh-keygen", "-f", sshKeyPath).CombinedOutput(); err != nil {
-			return err
-		}
-	}
-
-	// read and print
-	key, err := os.ReadFile(sshKeyPath + ".pub")
+	key, err := util.SSHKey()
 	if err != nil {
 		return err
 	}
@@ -74,7 +31,7 @@ func keyRenewCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	configPath, err = ensureDir(path.Join(configPath, "stl"))
+	configPath, err = util.EnsureDir(path.Join(configPath, "stl"))
 	if err != nil {
 		return err
 	}
@@ -124,7 +81,7 @@ func keyAddCmd(cmd *cobra.Command, args []string) error {
 		sshPath = "./"
 	}
 
-	sshPath, err = ensureDir(path.Join(sshPath, ".ssh"))
+	sshPath, err = util.EnsureDir(path.Join(sshPath, ".ssh"))
 	if err != nil {
 		return err
 	}
@@ -178,7 +135,7 @@ func keyRemoveCmd(cmd *cobra.Command, args []string) error {
 		sshPath = "./"
 	}
 
-	sshPath, err = ensureDir(path.Join(sshPath, ".ssh"))
+	sshPath, err = util.EnsureDir(path.Join(sshPath, ".ssh"))
 	if err != nil {
 		return err
 	}
@@ -195,7 +152,7 @@ func keyRemoveCmd(cmd *cobra.Command, args []string) error {
 	newAuthKey := []string{}
 
 	for _, v := range authKey {
-		if hash(v) != hashed {
+		if util.Hash(v) != hashed {
 			newAuthKey = append(newAuthKey, v)
 		}
 	}
