@@ -14,3 +14,12 @@ SSH Tunnel Lib
 ## Windows
 [windows-386](./dist/stl-windows-386)  
 [windows-amd64](./dist/stl-windows-amd64)  
+
+# Woking progress
+- [ ] `connect`
+- [ ] `disconnect`
+- [x] `key`
+- [x] `key renew`
+- [ ] `key add <key>`
+- [ ] `status`
+- [ ] `status [key]`
