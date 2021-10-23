@@ -16,8 +16,7 @@ SSH Tunnel Lib
 [windows-amd64](./dist/stl-windows-amd64)  
 
 # Woking progress
-- [ ] `connect`
-- [ ] `disconnect`
+- [x] `connect`
 - [x] `key`
 - [x] `key renew`
 - [x] `key add <key>`
