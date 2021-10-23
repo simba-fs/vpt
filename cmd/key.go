@@ -1,44 +1,41 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
-func ensureConfigDir() (string, error) {
-	configPath, err := os.UserConfigDir()
-	if err != nil {
-		return "", err
-	}
-	configPath = path.Join(configPath, "stl")
-	// sshPrivatePath := path.Join(configPath, "ssh.private")
-
-	stat, err := os.Stat(configPath)
+// ensureDir ensures the dir exist
+func ensureDir(dirPath string) (string, error) {
+	stat, err := os.Stat(dirPath)
 	if os.IsNotExist(err) {
 		// mkdir
-		os.Mkdir(configPath, 0775)
-	}else if !stat.IsDir() {
+		os.Mkdir(dirPath, 0775)
+	} else if !stat.IsDir() {
 		// remove
-		if err := os.Remove(configPath); err != nil {
+		if err := os.Remove(dirPath); err != nil {
 			return "", err
 		}
 		// mkdir
-		os.Mkdir(configPath, 0775)
+		os.Mkdir(dirPath, 0775)
 	}
-	return configPath, nil
+
+	return dirPath, nil
 }
 
-// func ensureDotSshDir() (string, error){
-//     sshPath, err := os.UserHomeDir()
-//
-// }
-//
 func keyCmd(cmd *cobra.Command, args []string) error {
-	configPath, err := ensureConfigDir()
+	configPath, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+	configPath, err = ensureDir(path.Join(configPath, "stl"))
 	if err != nil {
 		return err
 	}
@@ -62,7 +59,11 @@ func keyCmd(cmd *cobra.Command, args []string) error {
 }
 
 func keyRenewCmd(cmd *cobra.Command, args []string) error {
-	configPath, err := ensureConfigDir()
+	configPath, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+	configPath, err = ensureDir(path.Join(configPath, "stl"))
 	if err != nil {
 		return err
 	}
@@ -73,7 +74,7 @@ func keyRenewCmd(cmd *cobra.Command, args []string) error {
 	if err := os.Remove(sshKeyPath); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	if err := os.Remove(sshKeyPath+".pub"); err != nil && !os.IsNotExist(err) {
+	if err := os.Remove(sshKeyPath + ".pub"); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
@@ -85,8 +86,69 @@ func keyRenewCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+const (
+	stlControlStart = "# below is controlled by stl, do not change and words"
+	stlControlEnd   = "# end of stl controlled zone"
+)
+
 func keyAddCmd(cmd *cobra.Command, args []string) error {
-	fmt.Printf("Valid and add ssh public key\n")
+	if len(args) != 1 {
+		return errors.New("Miss some args")
+	}
+
+	key := args[0]
+	// _, _, _, _, err := ssh.ParseAuthorizedKey([]byte(key))
+	// if err != nil {
+	//     return err
+	// }
+
+	sshPath, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	// debug only
+	sshPath = "./"
+
+	sshPath, err = ensureDir(path.Join(sshPath, ".ssh"))
+	if err != nil {
+		return err
+	}
+
+	authKeyPath := path.Join(sshPath, "authorized_keys")
+
+	// read authorized_keys
+	authKeysByte, err := ioutil.ReadFile(authKeyPath)
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	if strings.Contains(string(authKeysByte), key) {
+		return nil
+	}
+
+	authKey := strings.Split(string(authKeysByte), "\n")
+	newAuthKey := []string{}
+
+	added := false
+	for _, v := range authKey {
+		newAuthKey = append(newAuthKey, v)
+		if v == stlControlStart {
+			added = true
+			newAuthKey = append(newAuthKey, key)
+		}
+	}
+
+	if !added {
+		newAuthKey = append(newAuthKey, stlControlStart, key, stlControlEnd)
+	}
+
+	ioutil.WriteFile(authKeyPath, []byte(strings.Join(newAuthKey, "\n")), 0600)
+
+	return nil
+}
+
+func keyRemoveCmd(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
@@ -106,6 +168,10 @@ func init() {
 		Use:   `add <key>`,
 		Short: `Add a user's ssh public key(for server)`,
 		RunE:  keyAddCmd,
+	}, &cobra.Command{
+		Use:   `remove <keyMD5>`,
+		Short: `Remove key be its md5 hash`,
+		RunE:  keyRemoveCmd,
 	})
 
 	rootCmd.AddCommand(cmd)

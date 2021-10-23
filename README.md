@@ -20,6 +20,7 @@ SSH Tunnel Lib
 - [ ] `disconnect`
 - [x] `key`
 - [x] `key renew`
-- [ ] `key add <key>`
+- [x] `key add <key>`
+- [ ] `key remove <key>`
 - [ ] `status`
 - [ ] `status [key]`
