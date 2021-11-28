@@ -1,4 +1,4 @@
-module github.com/meow55555/stl
+module github.com/simba-fs/vpt
 
 go 1.17
 

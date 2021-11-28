@@ -1,23 +1,19 @@
-# stl
-SSH Tunnel Lib
+# VPT
+SSH Tunnel
 
-# Download
+# Install
+`go install github.com/simba-fs/vpt@latest`
 
-## macOS
-[macOS-amd64](./dist/stl-macOS-amd64)  
+# Usage
+## Host
+`vpt connect host <local port>:<server ip>[:server port=22] [-p <password>]`
 
-## Linux
-[linux-386](./dist/stl-linux-386)  
-[linux-amd64](./dist/stl-linux-amd64)  
-[linux-arm64](./dist/stl-linux-arm64)  
-
-## Windows
-[windows-386](./dist/stl-windows-386)  
-[windows-amd64](./dist/stl-windows-amd64)  
+## Client
+`vpt connect client <local port>:<server ip>[:server port=22] [-p <password> ]`
 
 # Woking progress
-- [x] `connect`
-- [x] `key`
-- [x] `key renew`
-- [x] `key add <key>`
-- [x] `key remove <keySHA256>`
+- [x] `connect`  
+- [x] `key`  
+- [x] `key renew`  
+- [x] ~~`key add <key>`~~  
+- [x] ~~`key remove <keySHA256>`~~  

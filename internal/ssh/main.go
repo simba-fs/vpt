@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/meow55555/stl/internal/util"
+	"github.com/simba-fs/vpt/internal/util"
 )
 
 type Tunnel struct {

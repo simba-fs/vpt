@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/meow55555/stl/internal/ssh"
+	"github.com/simba-fs/vpt/internal/ssh"
 	"github.com/spf13/cobra"
 )
 

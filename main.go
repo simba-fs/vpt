@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/meow55555/stl/cmd"
+	"github.com/simba-fs/vpt/cmd"
 )
 
 func main() {
